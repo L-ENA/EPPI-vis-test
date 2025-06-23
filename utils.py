@@ -1,6 +1,6 @@
 import pandas as pd
 import streamlit as st
-from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
+import streamlit_antd_components as sac
 
 def initialise_state():
     if "max_length_int" not in st.session_state:
@@ -11,24 +11,38 @@ def initialise_state():
         st.session_state.max_length_textbox = "50"
     if "selected_color_theme" not in st.session_state:
         st.session_state.selected_color_theme = "viridis"
-    if 'display_df' not in st.session_state:
+    if "display_df" not in st.session_state:
         st.session_state.display_df = pd.DataFrame()
-    if 'frequency_counts' not in st.session_state:
+    if "frequency_counts" not in st.session_state:
         st.session_state.frequency_counts = {}
-    if 'year_histogram_df' not in st.session_state:
+    if "year_histogram_df" not in st.session_state:
         st.session_state.year_histogram_df = pd.DataFrame()
     if "search_info_retrieval" not in st.session_state:
         st.session_state.search_info_retrieval = []
+    # if "barchartname" not in st.session_state:#might need this later
+    #     st.session_state.barchartname = ""
+    # if "piechartname" not in st.session_state:
+    #     st.session_state.piechartname = ""
+
 
 def settings_menu():
-
-
-
-        # Sidebar settings menu
+    # Sidebar settings menu
     st.sidebar.header("⚙️ Settings Menu")
-    color_theme_list = ['viridis','blues', 'cividis', 'greens', 'inferno', 'magma', 'plasma', 'reds', 'rainbow', 'turbo'
-                            ]
-    st.session_state.selected_color_theme = st.sidebar.selectbox('Select a color theme', color_theme_list)
+    color_theme_list = [
+        "viridis",
+        "blues",
+        "cividis",
+        "greens",
+        "inferno",
+        "magma",
+        "plasma",
+        "reds",
+        "rainbow",
+        "turbo",
+    ]
+    st.session_state.selected_color_theme = st.sidebar.selectbox(
+        "Select a color theme", color_theme_list
+    )
 
     # Integer slider input
     st.sidebar.slider(
@@ -36,7 +50,7 @@ def settings_menu():
         min_value=2,
         max_value=100,
         value=10,
-        key="max_codes_slider_value"
+        key="max_codes_slider_value",
     )
 
     # Integer-only text input with validation
@@ -44,11 +58,17 @@ def settings_menu():
 
     # Validate input
     if st.session_state.max_length_textbox:
-        if st.session_state.max_length_textbox.isdigit() and int(st.session_state.max_length_textbox)>0:
+        if (
+            st.session_state.max_length_textbox.isdigit()
+            and int(st.session_state.max_length_textbox) > 0
+        ):
             st.session_state.max_length_int = int(st.session_state.max_length_textbox)
-            st.sidebar.success(f"Current label length: {st.session_state.max_length_int} characters")
+            st.sidebar.success(
+                f"Current label length: {st.session_state.max_length_int} characters"
+            )
         else:
             st.sidebar.error("❌ Please enter a valid integer.")
+
 
 # def aggrid_view(df):
 #     """
@@ -119,18 +139,20 @@ def settings_menu():
 #                 st.html("<b>URL:</b> <a href=\"" + ag.selected_data["url"].values[0] +
 #                         "\" target=\"_blank\">" + ag.selected_data["url"].values[0] + "</a>")
 
-def adding(lines,key, value):
-    if len(value)>0:
-        lines.append("{}  - {}".format(key,value.strip()))
+
+def adding(lines, key, value):
+    if len(value) > 0:
+        lines.append("{}  - {}".format(key, value.strip()))
     return lines
 
+
 def add_record(lines, i, row):
-    pt=str(row["typeName"]).replace(",", "").strip()
+    pt = str(row["typeName"]).replace(",", "").strip()
 
     #
-    lines.append('TY  - JOUR')
+    lines.append("TY  - JOUR")
     lines = adding(lines, "T1", str(row["title"]))
-    #lines = adding(lines, "OP", str(row["OriginalTitle"]))
+    # lines = adding(lines, "OP", str(row["OriginalTitle"]))
     lines = adding(lines, "N2", str(row["abstract"]))
     for a in row["authors"].split(";"):
         lines = adding(lines, "A1", str(a).strip())
@@ -140,47 +162,48 @@ def add_record(lines, i, row):
     lines = adding(lines, "JO", str(row["parentTitle"]))
     lines = adding(lines, "SP", str(row["pages"]))
     try:
-        lines = adding(lines, "PY", str(int(row["year"])))  # or else we will get a float, ie. year 2022.0
+        lines = adding(
+            lines, "PY", str(int(row["year"]))
+        )  # or else we will get a float, ie. year 2022.0
     except:
         lines = adding(lines, "PY", str(row["year"]))
-    #lines = adding(lines, "LA", str(row["Language"]))
-    #lines = adding(lines, "AD", str(row["User defined 3"]))
+    # lines = adding(lines, "LA", str(row["Language"]))
+    # lines = adding(lines, "AD", str(row["User defined 3"]))
     lines = adding(lines, "SN", str(row["standardNumber"]))
     lines = adding(lines, "DO", str(row["doi"]))
     lines = adding(lines, "CY", str(row["city"]))
     lines = adding(lines, "PB", str(row["publisher"]))
     lines = adding(lines, "UR", str(row["url"]))
 
-    #lines = adding(lines, "KW", str(row["Language"]))
-    #lines = adding(lines, "KW", pt)
-    #lines = adding(lines, "KW", str(row["Language"]))
+    # lines = adding(lines, "KW", str(row["Language"]))
+    # lines = adding(lines, "KW", pt)
+    # lines = adding(lines, "KW", str(row["Language"]))
     # lines = adding(lines, "ET", str(row["Edition"]))
-
-
 
     #####################add a notes field
 
     notes = str(row["quickCitation"])
     lines.append("N1  - {}".format(notes))
-    lines.append('ER  - ')
+    lines.append("ER  - ")
     lines.append("")
     return lines
 
+
 def to_ris(df):
     lines = []
-    for i,row in df.iterrows():
+    for i, row in df.iterrows():
         lines = add_record(lines, i, row)
 
-    lines='\n'.join(lines)
+    lines = "\n".join(lines)
     return lines
 
 
 def downloader(indf):
-
     d1, d2 = st.columns(2)
     with d1:
-        if st.button("Download Options",icon=":material/download:"):
+        if st.button("Download Options", icon=":material/download:"):
             with st.popover("Select"):
+
                 @st.cache_data
                 def convert_ris_download(df):
                     return to_ris(df)
@@ -219,31 +242,51 @@ def downloader(indf):
                 # )
     with d2:
         st.session_state.dashboard_df = indf
-        st.page_link(st.session_state.dashboardpage, label="Send to dashboard", icon="📊")
+        st.page_link(
+            st.session_state.dashboardpage, label="Send to dashboard", icon="📊"
+        )
+
+
+def convert_to_sac_tree_items(nodes):
+    def convert_node(node):
+        children = [convert_node(child) for child in node.get('children', [])]
+        is_leaf = not children
+        return sac.TreeItem(
+            label=node['label'],
+            icon='file' if is_leaf else 'folder',
+            children=children if not is_leaf else None
+        )
+
+    return [convert_node(node) for node in nodes]
+
+
+
 def process_df(df):
+    pass
     # Load the CSV file
 
-    # Step 1: Make 'character' entries unique by appending 'parent' if duplicates exist
-    duplicates = df['character'].duplicated(keep=False)
-    df['character'] = df.apply(
-        lambda row: f"{row['character']} ({row['parent']})" if duplicates[row.name] and row['parent']!="" else row['character'],
-        axis=1
-    )
+
+#     # Step 1: Make 'character' entries unique by appending 'parent' if duplicates exist
+#     duplicates = df['character'].duplicated(keep=False)
+#     df['character'] = df.apply(
+#         lambda row: f"{row['character']} ({row['parent']})" if duplicates[row.name] and row['parent']!="" else row['character'],
+#         axis=1
+#     )
 
 
-    # Step 2: Build mapping of each parent to the sum of its children's values
-    value_sums = df.groupby('parent')['value'].sum()
+#     # Step 2: Build mapping of each parent to the sum of its children's values
+#     value_sums = df.groupby('parent')['value'].sum()
 
-    # Step 3: Add own value only if character is not referenced as a parent anywhere
-    df['new_value'] = df['character'].map(value_sums).fillna(0)
-    not_in_parent = ~df['character'].isin(df['parent'].dropna().unique())
-    df.loc[not_in_parent, 'new_value'] += df.loc[not_in_parent, 'value']
+#     # Step 3: Add own value only if character is not referenced as a parent anywhere
+#     df['new_value'] = df['character'].map(value_sums).fillna(0)
+#     not_in_parent = ~df['character'].isin(df['parent'].dropna().unique())
+#     df.loc[not_in_parent, 'new_value'] += df.loc[not_in_parent, 'value']
 
-    # Step 4: Replace 'value' with the updated values
-    df['value'] = df['new_value'].astype(int)
-    df.drop(columns=['new_value'], inplace=True)
+#     # Step 4: Replace 'value' with the updated values
+#     df['value'] = df['new_value'].astype(int)
+#     df.drop(columns=['new_value'], inplace=True)
 
-    return df
+#     return df
 
 # def test_sunburst():
 #     import json
@@ -335,4 +378,4 @@ def process_df(df):
 # #process_csv("data/pg_3_processed.csv", "data/pg_3_processed_updated.csv")
 # test_sunburst()
 
-#plot_sunburst()
+# plot_sunburst()

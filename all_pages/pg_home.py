@@ -9,7 +9,9 @@ def home():
     """
 
     # get home page content
-    eppi_html = st.session_state.session.get("".join([st.session_state.eppi_base_url, "/EPPI-Vis/Review/Index"]))
+    eppi_html = st.session_state.session.get(
+        "".join([st.session_state.eppi_base_url, "/EPPI-Vis/Review/Index"])
+    )
     # parse html response
     soup = BeautifulSoup(eppi_html.text, "html.parser")
     # get title and subtitle
@@ -32,18 +34,30 @@ def home():
     with logo_col:
         logo_1, logo_2 = st.columns(2)
         with logo_1:
-            st.markdown("<img src='{0}' width='90' "
-                        "style='display: block; float: right; margin: 0 auto;'>".format(eppi_logo),
-                        unsafe_allow_html=True)
+            st.markdown(
+                "<img src='{0}' width='90' "
+                "style='display: block; float: right; margin: 0 auto;'>".format(
+                    eppi_logo
+                ),
+                unsafe_allow_html=True,
+            )
         with logo_2:
-            st.markdown("<img src='{0}' width='140' "
-                        "style='display: block; float: right; margin: 0 auto;'>".format(campbell_logo),
-                        unsafe_allow_html=True)
-    st.markdown("<style> [data-testid='stExpander'] details {border-style: none;} </style>",
-                unsafe_allow_html=True)
+            st.markdown(
+                "<img src='{0}' width='140' "
+                "style='display: block; float: right; margin: 0 auto;'>".format(
+                    campbell_logo
+                ),
+                unsafe_allow_html=True,
+            )
+    st.markdown(
+        "<style> [data-testid='stExpander'] details {border-style: none;} </style>",
+        unsafe_allow_html=True,
+    )
     st.markdown("##### Introduction")
     for p in page_description:
         # split and join improve formatting of original text
         st.write(" ".join(p.text.split()))
-    st.link_button("Visit the original EPPI-Vis page", "https://eppi.ioe.ac.uk/EPPI-Vis/Review/Index/536")
-
+    st.link_button(
+        "Visit the original EPPI-Vis page",
+        "https://eppi.ioe.ac.uk/EPPI-Vis/Review/Index/536",
+    )
